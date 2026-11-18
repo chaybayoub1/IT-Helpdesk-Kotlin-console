@@ -1,26 +1,21 @@
 package projet01_helpdesk.app
 
-import projet01_helpdesk.incidents.Incident
-import projet01_helpdesk.incidents.IncidentLogiciel
-import projet01_helpdesk.incidents.IncidentMateriel
-import projet01_helpdesk.materiel.Equipement
-import projet01_helpdesk.personnes.Employe
-import projet01_helpdesk.personnes.TechnicienSupport
+import projet01_helpdesk.notifications.NotificationEmail
+import projet01_helpdesk.notifications.NotificationSMS
+import projet01_helpdesk.services.ServiceSupport
 
-fun main() {
-    println("===== IT HELPDESK — INCIDENTS =====")
-    val employe = Employe("EM001", "Aya")
-    val technicien = TechnicienSupport("TECH001", "Sara", "matériel et réseaux")
-    listOf(employe, technicien).forEach {
-        it.afficherInformations()
-        it.travailler()
+fun main(args: Array<String>) {
+    val options = setOf("--demo", "--sms", "--help")
+    require(args.all { it in options }) { "Options disponibles : --demo, --sms, --help." }
+    if ("--help" in args) {
+        println("IT Helpdesk : menu interactif par défaut.")
+        println("--demo : scénario complet ; --sms : notifications SMS simulées.")
+        return
     }
-    val pc = Equipement("PC001", "PC portable d'Aya", "PC")
-    pc.declarerPanne()
-    pc.afficherInformations()
-    val incidents: List<Incident> = listOf(
-        IncidentMateriel("Le PC ne démarre plus."),
-        IncidentLogiciel("Impossible de se connecter.", "ERP")
-    )
-    incidents.forEach { println("${it.description} : ${it.diagnostiquer()}") }
+    val notificateur = if ("--sms" in args) NotificationSMS() else NotificationEmail()
+    if ("--demo" in args) {
+        executerDemonstration(notificateur)
+    } else {
+        ConsoleHelpdesk(ServiceSupport(notificateur)).demarrer()
+    }
 }

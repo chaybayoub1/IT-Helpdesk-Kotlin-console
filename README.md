@@ -1,87 +1,140 @@
 # IT Helpdesk — Kotlin console
 
-Première étape du projet POO : employés, techniciens et équipements.
-Les données restent en mémoire. Aucun accès à une base de données, aucune interface graphique et aucun module Android.
+Application de gestion des incidents informatiques, réalisée en cinq étapes.
+Employés, techniciens, équipements, incidents, tickets, interventions et notifications sont intégrés.
+Les données restent **en mémoire pendant la session**. Les notifications sont simulées par affichage ; aucun Email ou SMS réel n'est envoyé.
 
-## Démarrer dans IntelliJ IDEA
+## Lancer dans IntelliJ IDEA
 
-1. Ouvrir ce dossier avec **File > Open** et importer le projet Gradle.
-2. Choisir un JDK **21** pour le projet et pour la JVM Gradle.
-3. Utiliser le **Gradle Wrapper** fourni, puis attendre la synchronisation.
-4. Exécuter `main()` dans `src/main/kotlin/projet01_helpdesk/app/Main.kt`, ou la tâche Gradle `application > run`.
+1. Ouvrir ce dossier avec **File > Open**, puis importer le projet Gradle.
+2. Sélectionner le **JDK 21** pour le projet et la JVM Gradle ; utiliser le Wrapper fourni.
+3. Exécuter `main()` dans `src/main/kotlin/projet01_helpdesk/app/Main.kt`.
+4. Le menu démarre avec un service vide. Pour voir un exemple complet, ajouter `--demo` aux arguments du programme.
 
-## Démarrer dans PowerShell
+## Lancer dans PowerShell
 
 ```powershell
 Set-Location 'C:\IRISI\S3\Programmation Mobile\Projets\IT Helpdesk - Kotlin'
-.\gradlew.bat run
-```
 
-Pour compiler, produire la distribution et vérifier les règles :
+# Menu interactif
+.\gradlew.bat --console=plain run
 
-```powershell
+# Démonstration complète : incidents matériel et logiciel
+.\gradlew.bat --console=plain run --args="--demo"
+
+# Même démonstration avec les notifications SMS
+.\gradlew.bat --console=plain run --args="--demo --sms"
+
+# Compiler, vérifier et générer les distributions
 .\gradlew.bat build
-```
 
-Pour relancer seulement les vérifications :
+# Relancer tous les scénarios de vérification
+.\gradlew.bat verifierProjet
 
-```powershell
+# Relancer uniquement les vérifications d'origine
 .\gradlew.bat verifierEtape1
 ```
 
-Java 21 doit être accessible via `JAVA_HOME` ou le `PATH`. Le premier lancement télécharge Gradle et les dépendances Kotlin ; une connexion Internet est donc nécessaire. Aucune installation globale de Gradle ou de Kotlin n'est requise.
+Le premier lancement télécharge Gradle et Kotlin. Une fois les dépendances présentes, les commandes fonctionnent avec `--offline`.
+Java 21 doit être accessible via `JAVA_HOME` ou le `PATH`.
+Aucune installation globale de Kotlin ou de Gradle n'est requise.
 
-## Organisation
+Pour démarrer ensuite sans passer par Gradle :
+
+```powershell
+.\gradlew.bat installDist
+& '.\build\install\it-helpdesk-kotlin\bin\it-helpdesk-kotlin.bat'
+```
+
+La distribution ZIP est produite dans `build/distributions/it-helpdesk-kotlin.zip` et nécessite également Java 21.
+
+## Parcours dans le menu
+
+1. Enregistrer un employé (choix **1**), un technicien (**2**) et un équipement (**3**).
+2. Pour une panne matérielle, déclarer la panne (**5**), puis ouvrir le ticket (**7**).
+3. Affecter le technicien (**8**) et enregistrer son intervention (**9**).
+4. Après réparation réelle du matériel, remettre l'équipement en service (**6**).
+5. Confirmer que le problème est effectivement traité (**10**, réponse `oui`), résoudre (**11**), puis clôturer (**12**).
+6. Consulter les tickets (**13**) ou rechercher un numéro et son historique (**14**).
+7. Quitter avec **0**. Les données de cette session ne sont pas sauvegardées.
+
+Les incidents logiciels suivent le même parcours, sans imposer de panne ni de réparation matérielle.
+Le choix **4** affiche l'annuaire et le parc ; **15** affiche les éventuels échecs de notification.
+Une saisie invalide affiche une erreur puis revient au menu. Une fin d'entrée termine proprement la session.
+
+## Structure
 
 ```text
 src/main/kotlin/projet01_helpdesk/
-├── personnes/
-│   ├── Employe.kt
-│   └── TechnicienSupport.kt
-├── materiel/
-│   └── Equipement.kt
-├── incidents/       # Étapes 2 et 3, à développer
-├── notifications/   # Étape 4, à développer
-├── services/        # Étape 4, à développer
-└── app/
-    └── Main.kt
+├── personnes/       Employe, TechnicienSupport
+├── materiel/        Equipement
+├── incidents/       Incident, IncidentMateriel, IncidentLogiciel,
+│                    Ticket, Intervention
+├── notifications/   Notificateur, NotificationEmail, NotificationSMS
+├── services/        ServiceSupport
+└── app/             Main, ConsoleHelpdesk, Demonstration
+
+src/test/kotlin/projet01_helpdesk/verification/
+├── etape1/VerificationEtape1.kt
+├── VerificationProjet.kt
+├── VerificationTickets.kt
+├── VerificationService.kt
+└── VerificationIntegration.kt
 ```
 
-Le préfixe `src/main/kotlin` suit la convention Gradle ; les noms des packages respectent le cahier des charges de la conversation « Apprendre Kotlin Débutant ».
+## Règles métier
 
-## Règles de l'étape 1
+- Les informations obligatoires sont validées avec `require()`. Les propriétés descriptives sont en lecture seule.
+- L'état de panne et son compteur possèdent des setters privés. Une nouvelle panne augmente le compteur une seule fois ; une réparation conserve le total.
+- `Incident` est abstrait. Les incidents matériels et logiciels implémentent leurs diagnostics propres.
+- Les statuts restent des chaînes, regroupées en constantes : **Ouvert → En cours → Résolu → Clôturé**.
+- Un ticket ouvert peut recevoir un technicien une seule fois. Les interventions ne sont autorisées qu'en cours.
+- Chaque intervention conserve sa description, son technicien et sa date. Les changements importants alimentent l'historique.
+- La résolution exige au moins une intervention et une confirmation explicite du traitement. Pour un incident matériel, l'équipement doit être opérationnel.
+- Toute nouvelle intervention annule la confirmation précédente : le technicien doit confirmer de nouveau le résultat.
+- Un incident logiciel peut être résolu indépendamment d'une panne matérielle distincte du même équipement.
+- Seul un ticket résolu peut être clôturé. Les opérations invalides ne changent ni le statut ni l'historique.
+- Les matricules, références et numéros sont uniques dans le service, sans distinction de casse ni d'espaces extérieurs.
+- Un ticket enregistré utilise les instances d'employé et d'équipement du service. L'affectation par le service exige un technicien enregistré.
+- Les collections sont privées ; les listes retournées sont des copies. Les objets métier restent consultables et proposent leurs opérations contrôlées.
+- Le service envoie une notification après chaque opération réussie sur un ticket. Un échec du canal est signalé et mémorisé sans annuler l'opération métier.
+- Pour bénéficier de ces notifications et contrôles d'enregistrement, l'application passe par `ServiceSupport`.
 
-- `Employe` est une classe `open`. Son matricule et son nom sont obligatoires ; `afficherInformations()` et `travailler()` sont redéfinissables.
-- `TechnicienSupport` hérite d'`Employe`, ajoute une spécialité obligatoire, redéfinit les deux méthodes et propose `diagnostiquer(description)`.
-- Les informations descriptives sont des `val` : elles ne peuvent pas être remplacées après construction.
-- Chaque équipement commence opérationnel, avec zéro panne. `enPanne` et `nombrePannes` restent consultables, mais leurs setters sont privés.
-- `declarerPanne()` augmente le compteur seulement lors du passage d'opérationnel à en panne.
-- `reparer()` remet l'équipement en service sans effacer son historique de pannes.
-- Déclarer une panne déjà déclarée, ou réparer un équipement opérationnel, lève `IllegalStateException` sans modifier l'état ni le compteur.
-- Les chaînes vides ou composées uniquement d'espaces sont refusées avec `require()` (`IllegalArgumentException`). Le type reste une chaîne libre non vide, comme prévu pour cette première étape.
+## Vérifications et résultat
 
-`Main.kt` sert de démonstration et de vérification exécutable : polymorphisme, PC/imprimante/serveur, deux cycles de panne, opérations invalides et validation de chaque champ. Les lignes « Refus attendu » indiquent des cas négatifs correctement détectés. Une assertion qui échoue interrompt le programme et fait échouer la tâche `check`/`build`. Il n'y a pas encore de suite JUnit distincte.
+Chaque étape a été compilée et vérifiée avant son commit.
+Le 18 novembre 2026, `build run --args=--demo installDist` a réussi sous Java 21 :
+**22 scénarios**, plus les vérifications initiales de l'étape 1.
+
+Les tests couvrent les transitions autorisées/interdites, les champs invalides, les doublons,
+les références inconnues, les copies des collections, les notifications, les deux parcours complets,
+le menu et la fin de saisie. Les assertions font échouer Gradle si une règle n'est pas respectée.
+
+La suite utilise des programmes Kotlin de vérification sans dépendance JUnit :
+`verifierProjet` est rattaché à `check` et `build`. La tâche `test` déclenche aussi
+`verifierProjet`, mais son moteur JUnit est désactivé (ligne `test SKIPPED` attendue).
+
+## Étapes et Git
+
+| Étape | Contenu | État |
+|---|---|---|
+| 1 | Employés, techniciens, équipements et validations | Terminée, commit initial |
+| 2 | Abstraction et incidents matériels/logiciels | Terminée, commit dédié |
+| 3 | Tickets, interventions et cycle de vie | Terminée, commit dédié |
+| 4 | Service support, recherche, doublons et notifications | Terminée, commit dédié |
+| 5 | Menu, démonstration, intégration et tests | Terminée, commit dédié |
+
+Dépôt Git **local**, branche `main`, sans dépôt distant configuré.
+Les fichiers IntelliJ locaux, caches et sorties de compilation sont exclus du suivi.
+Pour consulter les étapes : `git log --oneline --reverse`.
 
 ## Configuration
 
-- Kotlin/JVM 2.2.10
-- Gradle Wrapper 8.14.3, avec vérification SHA-256 de la distribution
-- JDK et cible JVM 21
-- Point d'entrée : `projet01_helpdesk.app.MainKt`
+Kotlin/JVM **2.2.10**, Gradle Wrapper **8.14.3** (distribution vérifiée par SHA-256), JDK/cible JVM **21**.
+Point d'entrée : `projet01_helpdesk.app.MainKt`.
 
-Références officielles : [compatibilité Kotlin/Gradle](https://kotlinlang.org/docs/gradle-configure-project.html) et [Gradle 8.14.3](https://docs.gradle.org/8.14.3/release-notes.html).
+Le projet utilise l'adresse officielle alternative `https://repo1.maven.org/maven2` de Maven Central,
+car la résolution réseau de `repo.maven.apache.org` échouait lors de la préparation.
 
-## Suite prévue
-
-2. `Incident` abstrait, `IncidentMateriel` et `IncidentLogiciel`.
-3. `Ticket`, `Intervention` et transitions Ouvert → En cours → Résolu → Clôturé.
-4. `ServiceSupport`, contrôle des doublons et notifications Email/SMS simulées.
-5. Intégration et tests du parcours complet.
-
-Ces modules sont réservés dans l'arborescence, mais ne sont pas encore implémentés.
-
-## Vérification effectuée
-
-Le 18 novembre 2026, la commande `./gradlew.bat --no-daemon --console=plain build run` s'est terminée avec `BUILD SUCCESSFUL` sous Java 21.0.9. Les vérifications de l'étape 1 sont exécutées par `verifierEtape1`, rattachée à `check`, et ont toutes réussi.
-
-Le projet utilise l'adresse officielle alternative `https://repo1.maven.org/maven2` de Maven Central, car la résolution réseau de `repo.maven.apache.org` échouait sur cette machine lors de la préparation.
+Références : [configuration Kotlin/Gradle](https://kotlinlang.org/docs/gradle-configure-project.html)
+et [Gradle 8.14.3](https://docs.gradle.org/8.14.3/release-notes.html).

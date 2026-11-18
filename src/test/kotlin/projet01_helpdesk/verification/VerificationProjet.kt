@@ -10,6 +10,7 @@ fun main() {
     verifierIncidents()
     verifierTickets()
     verifierService()
+    verifierIntegration()
     terminerVerifications()
 }
 

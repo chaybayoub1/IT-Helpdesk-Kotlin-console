@@ -34,3 +34,13 @@ val verifierProjet by tasks.registering(JavaExec::class) {
 tasks.check {
     dependsOn(verifierProjet)
 }
+
+// Les scénarios Kotlin sont exécutés par verifierProjet, sans moteur JUnit.
+tasks.test {
+    dependsOn(verifierProjet)
+    enabled = false
+}
+
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
+}
