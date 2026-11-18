@@ -1,1 +1,1 @@
-Étape 4 : Notificateur, NotificationEmail et NotificationSMS. Notifications simulées.
+Étape 4 réalisée : Notificateur injecté, NotificationEmail et NotificationSMS simulées par affichage console. Aucun envoi réel.

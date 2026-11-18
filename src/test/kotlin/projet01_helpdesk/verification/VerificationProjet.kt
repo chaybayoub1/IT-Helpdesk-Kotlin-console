@@ -9,6 +9,7 @@ fun main() {
     verifierEtape1()
     verifierIncidents()
     verifierTickets()
+    verifierService()
     terminerVerifications()
 }
 
