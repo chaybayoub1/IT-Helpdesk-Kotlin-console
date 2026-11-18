@@ -8,6 +8,7 @@ import projet01_helpdesk.verification.etape1.main as verifierEtape1
 fun main() {
     verifierEtape1()
     verifierIncidents()
+    verifierTickets()
     terminerVerifications()
 }
 
