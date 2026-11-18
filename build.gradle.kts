@@ -15,15 +15,22 @@ application {
     mainClass.set("projet01_helpdesk.app.MainKt")
 }
 
-// Le programme de démonstration vérifie aussi les règles de l'étape 1.
 val verifierEtape1 by tasks.registering(JavaExec::class) {
     group = "verification"
     description = "Vérifie les validations et le cycle des pannes."
-    classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set(application.mainClass)
-    dependsOn(tasks.classes)
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("projet01_helpdesk.verification.etape1.VerificationEtape1Kt")
+    dependsOn(tasks.testClasses)
+}
+
+val verifierProjet by tasks.registering(JavaExec::class) {
+    group = "verification"
+    description = "Exécute les scénarios de vérification du projet."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("projet01_helpdesk.verification.VerificationProjetKt")
+    dependsOn(tasks.testClasses)
 }
 
 tasks.check {
-    dependsOn(verifierEtape1)
+    dependsOn(verifierProjet)
 }

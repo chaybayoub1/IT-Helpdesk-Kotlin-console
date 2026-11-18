@@ -1,1 +1,2 @@
-Étapes 2 et 3 : Incident, IncidentMateriel, IncidentLogiciel, Ticket et Intervention.
+Étape 2 réalisée : Incident abstrait et diagnostics spécialisés matériel/logiciel.
+Étape 3 : Ticket et Intervention.
